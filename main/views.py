@@ -24,6 +24,11 @@ def index(request):
 
     return render(request, 'dashboard.html')
 
+
+def display(request):
+        return render(request, 'display.html', {'theme':'img_2', 'instagram_url':'www.google.com', 'linkedin_url':'www.google.com', 'youtube_url':'www.google.com', 'website':'www.google.com'})
+
+
 def login(request):
     if request.user.is_authenticated:
         return redirect('index')
