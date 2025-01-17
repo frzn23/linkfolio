@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{user.username}} - Linkfolio</title>
+    <title>{{link.username}} - Linkfolio</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         /* Common Hover Effects */
@@ -79,7 +79,7 @@
         }
     </style>
 </head>
-<body class="{% if theme == 'img_1' %}theme-minimal{% elif theme == 'img_2' %}theme-gradient{% else %}theme-dark{% endif %} min-h-screen">
+<body class="{% if link.theme == 'img_1' %}theme-minimal{% elif link.theme == 'img_2' %}theme-gradient{% else %}theme-dark{% endif %} min-h-screen">
     <!-- Navbar -->
     <nav class="nav-bar fixed top-0 z-50 w-full border-b">
         <div class="px-3 py-3 lg:px-5 lg:pl-3">
@@ -102,9 +102,9 @@
     <div class="container mx-auto px-4 pt-24 pb-12">
         <div class="text-center mb-12">
             <div class="w-24 h-24 rounded-full bg-gray-200 mx-auto mb-4 overflow-hidden">
-                <img src="/api/placeholder/96/96" alt="Profile" class="w-full h-full object-cover">
+                <img src="https://i.pinimg.com/736x/69/8e/1d/698e1d14b12a8f40a578d12497fd9c1a.jpg" alt="Profile" class="w-full h-full object-cover">
             </div>
-            <h1 class="text-2xl font-bold mb-2">@{{user.username}}</h1>
+            <h1 class="text-2xl font-bold mb-2">@{{link.username}}</h1>
             {% if user.display_name %}
                 <p class="text-lg opacity-80">{{user.display_name}}</p>
             {% endif %}
@@ -112,8 +112,8 @@
 
         <!-- Links Section -->
         <div class="max-w-2xl mx-auto space-y-4">
-            {% if website %}
-            <a href="{{website}}" target="_blank" rel="noopener noreferrer" 
+            {% if link.website %}
+            <a href="{{link.website}}" target="_blank" rel="noopener noreferrer" 
                class="link-card block p-4 rounded-lg">
                 <div class="flex items-center space-x-4">
                     <div class="flex-shrink-0">
@@ -123,14 +123,14 @@
                     </div>
                     <div class="flex-grow">
                         <h2 class="font-semibold">Website</h2>
-                        <p class="opacity-80 text-sm">{{website}}</p>
+                        <p class="opacity-80 text-sm">{{link.website}}</p>
                     </div>
                 </div>
             </a>
             {% endif %}
 
-            {% if instagram_url %}
-            <a href="{{instagram_url}}" target="_blank" rel="noopener noreferrer" 
+            {% if link.instagram_url %}
+            <a href="{{link.instagram_url}}" target="_blank" rel="noopener noreferrer" 
                class="link-card block p-4 rounded-lg">
                 <div class="flex items-center space-x-4">
                     <div class="flex-shrink-0">
@@ -140,14 +140,14 @@
                     </div>
                     <div class="flex-grow">
                         <h2 class="font-semibold">Instagram</h2>
-                        <p class="opacity-80 text-sm">{{instagram_url}}</p>
+                        <p class="opacity-80 text-sm">{{link.instagram_url}}</p>
                     </div>
                 </div>
             </a>
             {% endif %}
 
-            {% if linkedin_url %}
-            <a href="{{linkedin_url}}" target="_blank" rel="noopener noreferrer" 
+            {% if link.linkedin_url %}
+            <a href="{{link.linkedin_url}}" target="_blank" rel="noopener noreferrer" 
                class="link-card block p-4 rounded-lg">
                 <div class="flex items-center space-x-4">
                     <div class="flex-shrink-0">
@@ -157,14 +157,14 @@
                     </div>
                     <div class="flex-grow">
                         <h2 class="font-semibold">LinkedIn</h2>
-                        <p class="opacity-80 text-sm">{{linkedin_url}}</p>
+                        <p class="opacity-80 text-sm">{{link.linkedin_url}}</p>
                     </div>
                 </div>
             </a>
             {% endif %}
 
-            {% if youtube_url %}
-            <a href="{{youtube_url}}" target="_blank" rel="noopener noreferrer" 
+            {% if link.youtube_url %}
+            <a href="{{link.youtube_url}}" target="_blank" rel="noopener noreferrer" 
                class="link-card block p-4 rounded-lg">
                 <div class="flex items-center space-x-4">
                     <div class="flex-shrink-0">
@@ -174,12 +174,18 @@
                     </div>
                     <div class="flex-grow">
                         <h2 class="font-semibold">YouTube</h2>
-                        <p class="opacity-80 text-sm">{{youtube_url}}</p>
+                        <p class="opacity-80 text-sm">{{link.youtube_url}}</p>
                     </div>
                 </div>
             </a>
             {% endif %}
 
+<p>
+<a href="{% url 'track_click' username=link.username link_type='website' %}">Your Website</a>
+<a href="{% url 'track_click' username='user' link_type='instagram' %}">Instagram</a>
+<a href="{% url 'track_click' username='user' link_type='linkedin' %}">LinkedIn</a>
+<a href="{% url 'track_click' username='user' link_type='youtube' %}">YouTube</a>
+</p>
 
 <!-- Repeat for other links -->
         </div>

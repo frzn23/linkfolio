@@ -12,3 +12,12 @@ class Links(models.Model):
     
     def __str__(self):
         return self.username
+
+class LinkClick(models.Model):
+    username = models.CharField(max_length=1000)
+    link_type = models.CharField(max_length=100)  # website, instagram, linkedin, youtube
+    clicked_at = models.DateTimeField(auto_now_add=True)
+    visitor_ip = models.GenericIPAddressField(null=True)
+    
+    def __str__(self):
+        return f"{self.username} - {self.link_type} click at {self.clicked_at}"

@@ -1,0 +1,163 @@
+{% extends "base.html" %}
+{% block content %}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/chart.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <style>
+        .analytics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .stat-card h3 {
+            margin: 0;
+            color: #6b7280;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+        
+        .stat-card .number {
+            font-size: 1.875rem;
+            font-weight: 600;
+            color: #4f46e5;
+            margin-top: 0.5rem;
+        }
+        
+        .chart-container {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-bottom: 1.5rem;
+        }
+        
+        .chart-container h2 {
+            margin: 0 0 1rem 0;
+            color: #374151;
+            font-size: 1.25rem;
+        }
+    </style>
+    <div class="max-w-4xl mx-auto p-4">
+        <h1 class="text-2xl font-bold mb-6">Link Analytics</h1>
+        
+        <!-- Stats Grid -->
+        <div class="analytics-grid">
+            <div class="stat-card">
+                <h3>Total Clicks</h3>
+                <div class="number" id="totalClicks">0</div>
+            </div>
+            <div class="stat-card">
+                <h3>Most Clicked Link</h3>
+                <div class="number" id="mostClicked">-</div>
+            </div>
+            <div class="stat-card">
+                <h3>Last 24h Clicks</h3>
+                <div class="number" id="recentClicks">0</div>
+            </div>
+        </div>
+        
+        <!-- Daily Clicks Chart -->
+        <div class="chart-container">
+            <h2>Click Trends (Last 30 Days)</h2>
+            <canvas id="dailyClicksChart"></canvas>
+        </div>
+        
+        <!-- Link Type Distribution Chart -->
+        <div class="chart-container">
+            <h2>Clicks by Link Type</h2>
+            <canvas id="linkTypeChart"></canvas>
+        </div>
+    </div>
+
+    <script>
+        // Parse Django template variables
+        const dailyClicks = {{ daily_clicks|safe }};
+        const clicksByType = {{ clicks_by_type|safe }};
+        const totalClicks = {{ total_clicks }};
+
+        // Update stats
+        document.getElementById('totalClicks').textContent = totalClicks;
+        
+        // Find most clicked link
+        const mostClicked = clicksByType.reduce((max, curr) => 
+            curr.total > max.total ? curr : max
+        , {total: 0});
+        document.getElementById('mostClicked').textContent = 
+            mostClicked.link_type ? `${mostClicked.link_type} (${mostClicked.total})` : '-';
+        
+        // Calculate recent clicks (last 24h)
+        const recentClicks = dailyClicks[dailyClicks.length - 1]?.total || 0;
+        document.getElementById('recentClicks').textContent = recentClicks;
+
+        // Daily clicks chart
+        const dailyChart = new Chart(
+            document.getElementById('dailyClicksChart'),
+            {
+                type: 'line',
+                data: {
+                    labels: dailyClicks.map(item => item.date),
+                    datasets: [{
+                        label: 'Daily Clicks',
+                        data: dailyClicks.map(item => item.total),
+                        borderColor: '#4f46e5',
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1
+                            }
+                        }
+                    }
+                }
+            }
+        );
+
+        // Link type distribution chart
+        const typeChart = new Chart(
+            document.getElementById('linkTypeChart'),
+            {
+                type: 'doughnut',
+                data: {
+                    labels: clicksByType.map(item => item.link_type),
+                    datasets: [{
+                        data: clicksByType.map(item => item.total),
+                        backgroundColor: [
+                            '#4f46e5',
+                            '#7c3aed',
+                            '#2563eb',
+                            '#db2777'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            }
+        );
+    </script>
+
+{% endblock content %}

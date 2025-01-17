@@ -3,7 +3,12 @@ from django.contrib.auth.models import User
 from django.contrib.auth import login as auth_login, authenticate, logout as auth_logout
 from django.contrib import messages
 from django.db import IntegrityError
-from .models import Links
+from .models import Links, LinkClick
+from django.db.models import Count
+from django.db.models.functions import TruncDate
+from django.utils import timezone
+from datetime import timedelta, datetime
+
 
 def index(request):
     if not request.user.is_authenticated:
@@ -25,8 +30,96 @@ def index(request):
     return render(request, 'dashboard.html')
 
 
-def display(request):
-        return render(request, 'display.html', {'theme':'img_2', 'instagram_url':'www.google.com', 'linkedin_url':'www.google.com', 'youtube_url':'www.google.com', 'website':'www.google.com'})
+def display(request, username):
+        user_id = username
+        data = Links.objects.get(username=user_id)
+        theme = data.theme
+        insta = data.insta_url
+        linkedin = data.linkedin_url
+        yt = data.youtube_url
+        web = data.website
+        
+        link = {
+        'username': user_id,
+        'website': web,
+        'instagram_url': insta,
+        'linkedin_url': linkedin,
+        'youtube_url': yt,
+        'theme': theme
+        }
+
+        params = {'theme':theme, 'instagram_url':insta, 'linkedin_url':linkedin, 'youtube_url':yt, 'website':web}
+        return render(request, 'display.html', {'link':link})
+
+def analytics(request):
+    if not request.user.is_authenticated:
+        return redirect('login')        
+    username = request.user.username
+    
+    # Get date range (last 30 days)
+    end_date = timezone.now()
+    start_date = end_date - timedelta(days=30)
+    
+    # Get daily clicks
+    daily_clicks = LinkClick.objects.filter(
+        username=username,
+        clicked_at__gte=start_date
+    ).annotate(
+        date=TruncDate('clicked_at')
+    ).values('date').annotate(
+        total=Count('id')
+    ).order_by('date')
+
+    # Convert date objects to strings
+    daily_clicks = [
+        {'date': daily_click['date'].strftime('%Y-%m-%d'), 'total': daily_click['total']}
+        for daily_click in daily_clicks
+    ]
+    
+    # Get clicks by link type
+    clicks_by_type = LinkClick.objects.filter(
+        username=username
+    ).values('link_type').annotate(
+        total=Count('id')
+    )
+    
+    # Get total clicks
+    total_clicks = LinkClick.objects.filter(username=username).count()
+    
+    context = {
+        'daily_clicks': daily_clicks,
+        'clicks_by_type': list(clicks_by_type),  # Ensure it's JSON serializable
+        'total_clicks': total_clicks,
+    }
+    
+    return render(request, 'analytics.html', context)
+
+
+def track_click(request, username, link_type):
+    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+    if x_forwarded_for:
+        ip = x_forwarded_for.split(',')[0]
+    else:
+        ip = request.META.get('REMOTE_ADDR')
+    
+    LinkClick.objects.create(
+        username=username,
+        link_type=link_type,
+        visitor_ip=ip
+    )
+    
+    # Get the redirect URL from Links model
+    user_links = Links.objects.get(username=username)
+    if link_type == 'website':
+        redirect_url = user_links.website
+    elif link_type == 'instagram':
+        redirect_url = user_links.insta_url
+    elif link_type == 'linkedin':
+        redirect_url = user_links.linkedin_url
+    elif link_type == 'youtube':
+        redirect_url = user_links.youtube_url
+    
+    return redirect(redirect_url)
 
 
 def login(request):
