@@ -30,8 +30,9 @@ def index(request):
         return redirect('index')
         # return render(request, 'dashboard.html')
 
+    q = Links.objects.filter(username=request.user.username).values()[0]
     username = request.user.username
-    return render(request, 'dashboard.html', {'username': username})
+    return render(request, 'dashboard.html', {'username': username,'data':q})
 
 
 def display(request, username):
