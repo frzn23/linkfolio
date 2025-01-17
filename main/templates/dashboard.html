@@ -16,12 +16,12 @@
     </div>
     {% endif %}
 
-    <form method="POST" class="space-y-8" action="">
+    <form method="POST" class="space-y-8" action="" id="profileForm" onsubmit="return validateForm()">
         {% csrf_token %}
         
         <!-- Links Section -->
         <div class="space-y-4">
-            <h2 class="text-xl font-semibold mb-4">Your Link: <u><a href="#">somelink.com</a></u></h2>
+            <h2 class="text-xl font-semibold mb-4" id="link-id">Your Link: <u><a href="/display/{{username}}">/display/{{username}}</a></u></h2>
             
             <!-- Website Link -->
             <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
@@ -101,7 +101,7 @@
                 <!-- Theme 1 -->
                 <div class="theme-option cursor-pointer" onclick="selectTheme('img_1', this)" data-theme="img_1">
                     <div class="relative border-2 rounded-lg overflow-hidden hover:border-indigo-500 transition-colors">
-                        <img src="/api/placeholder/400/300" alt="Theme 1" class="w-full h-48 object-cover">
+                        <img src="https://raw.githubusercontent.com/frzn23/linkfolio/refs/heads/master/light.png" alt="Theme 1" class="w-full h-48 object-cover">
                         <div class="selected-indicator hidden absolute top-2 right-2 bg-indigo-500 text-white rounded-full p-1">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
@@ -114,7 +114,7 @@
                 <!-- Theme 2 -->
                 <div class="theme-option cursor-pointer" onclick="selectTheme('img_2', this)" data-theme="img_2">
                     <div class="relative border-2 rounded-lg overflow-hidden hover:border-indigo-500 transition-colors">
-                        <img src="/api/placeholder/400/300" alt="Theme 2" class="w-full h-48 object-cover">
+                        <img src="https://raw.githubusercontent.com/frzn23/linkfolio/refs/heads/master/grad.png" alt="Theme 2" class="w-full h-48 object-cover">
                         <div class="selected-indicator hidden absolute top-2 right-2 bg-indigo-500 text-white rounded-full p-1">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
@@ -127,7 +127,7 @@
                 <!-- Theme 3 -->
                 <div class="theme-option cursor-pointer" onclick="selectTheme('img_3', this)" data-theme="img_3">
                     <div class="relative border-2 rounded-lg overflow-hidden hover:border-indigo-500 transition-colors">
-                        <img src="/api/placeholder/400/300" alt="Theme 3" class="w-full h-48 object-cover">
+                        <img src="https://raw.githubusercontent.com/frzn23/linkfolio/refs/heads/master/dark.png" alt="Theme 3" class="w-full h-48 object-cover">
                         <div class="selected-indicator hidden absolute top-2 right-2 bg-indigo-500 text-white rounded-full p-1">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
@@ -151,6 +151,42 @@
 
 
 <script>
+
+
+    function validateForm() {
+        // Check if a theme is selected
+        const selectedTheme = document.querySelector('#selected_theme').value;
+        if (!selectedTheme) {
+            alert("Please select a theme before submitting.");
+            return false;
+        }
+
+        // Check if at least one link is filled and valid
+        const linkInputs = document.querySelectorAll('input[type="url"]');
+        let atLeastOneFilled = false;
+        const urlPattern = new RegExp(
+            /^(https?:\/\/)?([\da-z\.-]+\.[a-z\.]{2,6})([\/\w \.-]*)*\/?$/
+        );
+
+        for (let input of linkInputs) {
+            if (input.value) {
+                if (!urlPattern.test(input.value)) {
+                    alert(`Please enter a valid URL in the "${input.placeholder}" field.`);
+                    return false;
+                }
+                atLeastOneFilled = true;
+            }
+        }
+
+        if (!atLeastOneFilled) {
+            alert("Please fill in at least one link field before submitting.");
+            return false;
+        }
+
+        // If all validations pass
+        return true;
+    }
+
 
     function selectTheme(themeId, element) {
         // Get all theme options
@@ -184,6 +220,10 @@
             }
         }
     });
+
+    let current_url = window.location.href;
+    let display_url = current_url+"display/{{username}}";
+    document.getElementById('link-id').innerHTML = "Your Link: <u><a href="+display_url+">"+display_url+"</a></u>";
 
 </script>
 

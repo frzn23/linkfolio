@@ -113,7 +113,7 @@
         <!-- Links Section -->
         <div class="max-w-2xl mx-auto space-y-4">
             {% if link.website %}
-            <a href="{{link.website}}" target="_blank" rel="noopener noreferrer" 
+            <a href="{% url 'track_click' username=link.username link_type='website' %}" target="_blank" rel="noopener noreferrer" 
                class="link-card block p-4 rounded-lg">
                 <div class="flex items-center space-x-4">
                     <div class="flex-shrink-0">
@@ -130,7 +130,7 @@
             {% endif %}
 
             {% if link.instagram_url %}
-            <a href="{{link.instagram_url}}" target="_blank" rel="noopener noreferrer" 
+            <a href="{% url 'track_click' username=link.username link_type='instagram' %}" target="_blank" rel="noopener noreferrer" 
                class="link-card block p-4 rounded-lg">
                 <div class="flex items-center space-x-4">
                     <div class="flex-shrink-0">
@@ -147,7 +147,7 @@
             {% endif %}
 
             {% if link.linkedin_url %}
-            <a href="{{link.linkedin_url}}" target="_blank" rel="noopener noreferrer" 
+            <a href="{% url 'track_click' username=link.username link_type='linkedin' %}" target="_blank" rel="noopener noreferrer" 
                class="link-card block p-4 rounded-lg">
                 <div class="flex items-center space-x-4">
                     <div class="flex-shrink-0">
@@ -164,7 +164,7 @@
             {% endif %}
 
             {% if link.youtube_url %}
-            <a href="{{link.youtube_url}}" target="_blank" rel="noopener noreferrer" 
+            <a href="{% url 'track_click' username=link.username link_type='youtube' %}" target="_blank" rel="noopener noreferrer" 
                class="link-card block p-4 rounded-lg">
                 <div class="flex items-center space-x-4">
                     <div class="flex-shrink-0">
@@ -180,12 +180,12 @@
             </a>
             {% endif %}
 
-<p>
+{% comment %} <p>
 <a href="{% url 'track_click' username=link.username link_type='website' %}">Your Website</a>
 <a href="{% url 'track_click' username='user' link_type='instagram' %}">Instagram</a>
 <a href="{% url 'track_click' username='user' link_type='linkedin' %}">LinkedIn</a>
 <a href="{% url 'track_click' username='user' link_type='youtube' %}">YouTube</a>
-</p>
+</p> {% endcomment %}
 
 <!-- Repeat for other links -->
         </div>

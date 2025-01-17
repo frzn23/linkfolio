@@ -5,9 +5,13 @@ from django.contrib import messages
 from django.db import IntegrityError
 from .models import Links, LinkClick
 from django.db.models import Count
+from django.http import HttpResponse
 from django.db.models.functions import TruncDate
 from django.utils import timezone
 from datetime import timedelta, datetime
+from django.core.serializers.json import DjangoJSONEncoder
+import json
+
 
 
 def index(request):
@@ -26,13 +30,15 @@ def index(request):
         return redirect('index')
         # return render(request, 'dashboard.html')
 
-
-    return render(request, 'dashboard.html')
+    username = request.user.username
+    return render(request, 'dashboard.html', {'username': username})
 
 
 def display(request, username):
         user_id = username
         data = Links.objects.get(username=user_id)
+        if data.link_status == False:
+            return HttpResponse('<h1>Link Is Inactive as there is no urls. Please set up the link. <a href="/">Go Back</a></h1>')
         theme = data.theme
         insta = data.insta_url
         linkedin = data.linkedin_url
@@ -53,74 +59,92 @@ def display(request, username):
 
 def analytics(request):
     if not request.user.is_authenticated:
-        return redirect('login')        
+        return redirect('login')
+        
     username = request.user.username
     
     # Get date range (last 30 days)
     end_date = timezone.now()
     start_date = end_date - timedelta(days=30)
     
-    # Get daily clicks
+    # Get daily clicks with link type breakdown
     daily_clicks = LinkClick.objects.filter(
         username=username,
         clicked_at__gte=start_date
     ).annotate(
         date=TruncDate('clicked_at')
-    ).values('date').annotate(
+    ).values('date', 'link_type').annotate(
         total=Count('id')
     ).order_by('date')
 
-    # Convert date objects to strings
-    daily_clicks = [
-        {'date': daily_click['date'].strftime('%Y-%m-%d'), 'total': daily_click['total']}
-        for daily_click in daily_clicks
-    ]
+    # Restructure the data to group by date with counts for each link type
+    daily_clicks_formatted = {}
+    for click in daily_clicks:
+        date = click['date'].strftime('%Y-%m-%d') if isinstance(click['date'], datetime) else click['date']
+        
+        if date not in daily_clicks_formatted:
+            daily_clicks_formatted[date] = {
+                'date': date,
+                'website': 0,
+                'linkedin': 0,
+                'instagram': 0,
+                'youtube': 0
+            }
+        
+        link_type = click['link_type']
+        if link_type in daily_clicks_formatted[date]:
+            daily_clicks_formatted[date][link_type] = click['total']
+
+    # Convert to list for the template
+    daily_clicks_list = list(daily_clicks_formatted.values())
     
-    # Get clicks by link type
-    clicks_by_type = LinkClick.objects.filter(
+    # Get clicks by type
+    clicks_by_type = list(LinkClick.objects.filter(
         username=username
     ).values('link_type').annotate(
         total=Count('id')
-    )
+    ).order_by('-total'))  # Sort by most clicks
     
     # Get total clicks
     total_clicks = LinkClick.objects.filter(username=username).count()
     
+    # Get recent clicks (last 24 hours)
+    recent_clicks = LinkClick.objects.filter(
+        username=username,
+        clicked_at__gte=timezone.now() - timedelta(hours=24)
+    ).count()
+    
+    # Add recent clicks to context
     context = {
-        'daily_clicks': daily_clicks,
-        'clicks_by_type': list(clicks_by_type),  # Ensure it's JSON serializable
+        'daily_clicks_json': json.dumps(daily_clicks_list, cls=DjangoJSONEncoder),
+        'clicks_by_type_json': json.dumps(clicks_by_type, cls=DjangoJSONEncoder),
         'total_clicks': total_clicks,
+        'recent_clicks': recent_clicks,
     }
     
     return render(request, 'analytics.html', context)
 
 
 def track_click(request, username, link_type):
-    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
-    if x_forwarded_for:
-        ip = x_forwarded_for.split(',')[0]
-    else:
-        ip = request.META.get('REMOTE_ADDR')
-    
+    # Simply create a click record
     LinkClick.objects.create(
         username=username,
-        link_type=link_type,
-        visitor_ip=ip
+        link_type=link_type
     )
     
     # Get the redirect URL from Links model
     user_links = Links.objects.get(username=username)
-    if link_type == 'website':
-        redirect_url = user_links.website
-    elif link_type == 'instagram':
-        redirect_url = user_links.insta_url
-    elif link_type == 'linkedin':
-        redirect_url = user_links.linkedin_url
-    elif link_type == 'youtube':
-        redirect_url = user_links.youtube_url
     
+    # Get the appropriate URL based on link type
+    redirect_url = {
+        'website': user_links.website,
+        'instagram': user_links.insta_url,
+        'linkedin': user_links.linkedin_url,
+        'youtube': user_links.youtube_url
+    }.get(link_type)
+    
+    # Redirect to the URL
     return redirect(redirect_url)
-
 
 def login(request):
     if request.user.is_authenticated:
